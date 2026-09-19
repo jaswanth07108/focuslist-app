@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { IconCheck, IconTrash, IconEdit, IconClock, IconTag, IconCalendar } from './Icons';
 
-export const TaskItem = ({
+export const TaskItem = React.memo(({
   task,
   onToggleComplete,
   onEdit,
@@ -34,6 +34,10 @@ export const TaskItem = ({
     <article
       className={`task-card ${task.completed ? 'task-card-completed' : ''}`}
       aria-label={`Task: ${task.title}`}
+      data-testid="task-item"
+      data-task-id={task.id}
+      data-priority={task.priority}
+      data-completed={task.completed}
     >
       <div className="task-card-main">
         {/* Completion Checkbox */}
@@ -41,7 +45,10 @@ export const TaskItem = ({
           onClick={() => onToggleComplete(task.id)}
           className={`checkbox-custom ${task.completed ? 'checkbox-checked' : ''}`}
           aria-label={task.completed ? "Mark task as pending" : "Mark task as completed"}
+          aria-checked={task.completed}
+          role="checkbox"
           title={task.completed ? "Mark task as pending" : "Mark task as completed"}
+          data-testid="task-checkbox"
         >
           {task.completed && <IconCheck className="w-4 h-4 text-white" />}
         </button>
@@ -49,12 +56,12 @@ export const TaskItem = ({
         {/* Task Title & Details */}
         <div className="task-content">
           <div className="task-header-line">
-            <h3 className={`task-title ${task.completed ? 'completed-text' : ''}`}>
+            <h3 className={`task-title ${task.completed ? 'completed-text' : ''}`} data-testid="task-title">
               {task.title}
             </h3>
 
             {/* Priority Badge */}
-            <span className={getPriorityBadgeClass(task.priority)}>
+            <span className={getPriorityBadgeClass(task.priority)} data-testid="task-priority">
               {task.priority === 'High' && '🔴 High'}
               {task.priority === 'Medium' && '🟡 Medium'}
               {task.priority === 'Low' && '🟢 Low'}
@@ -63,7 +70,7 @@ export const TaskItem = ({
 
           {/* Description */}
           {task.description && (
-            <p className={`task-description ${task.completed ? 'completed-text' : ''}`}>
+            <p className={`task-description ${task.completed ? 'completed-text' : ''}`} data-testid="task-description">
               {task.description}
             </p>
           )}
@@ -71,14 +78,14 @@ export const TaskItem = ({
           {/* Metadata badges (Category, Due Date, Focus Time) */}
           <div className="task-meta-row">
             {task.category && (
-              <span className="meta-tag">
+              <span className="meta-tag" data-testid="task-category">
                 <IconTag className="w-3.5 h-3.5" />
                 {task.category}
               </span>
             )}
 
             {task.dueDate && (
-              <span className="meta-tag">
+              <span className="meta-tag" data-testid="task-duedate">
                 <IconCalendar className="w-3.5 h-3.5" />
                 Due: {task.dueDate}
               </span>
@@ -96,6 +103,8 @@ export const TaskItem = ({
                 onClick={() => setShowSubtasks(!showSubtasks)}
                 className="meta-tag meta-tag-button"
                 aria-label="Toggle subtasks view"
+                aria-expanded={showSubtasks}
+                data-testid="subtasks-toggle"
               >
                 Checklist ({completedSubtasksCount}/{totalSubtasksCount})
               </button>
@@ -104,7 +113,7 @@ export const TaskItem = ({
 
           {/* Subtasks Accordion / Checklist */}
           {totalSubtasksCount > 0 && showSubtasks && (
-            <div className="subtasks-container">
+            <div className="subtasks-container" data-testid="subtasks-container">
               {task.subtasks.map((subtask) => (
                 <label key={subtask.id} className="subtask-item cursor-pointer">
                   <input
@@ -112,6 +121,7 @@ export const TaskItem = ({
                     checked={subtask.completed}
                     onChange={() => onToggleSubtask(task.id, subtask.id)}
                     className="subtask-checkbox"
+                    data-testid={`subtask-checkbox-${subtask.id}`}
                   />
                   <span className={subtask.completed ? 'completed-text' : ''}>
                     {subtask.title}
@@ -131,6 +141,7 @@ export const TaskItem = ({
               className="btn-action btn-action-focus"
               title="Start Pomodoro Focus Timer for this task"
               aria-label="Focus on task"
+              data-testid="start-timer-btn"
             >
               <IconClock className="w-4 h-4 text-indigo-400" />
             </button>
@@ -142,6 +153,7 @@ export const TaskItem = ({
             className="btn-action btn-action-edit"
             title="Edit Task"
             aria-label="Edit Task"
+            data-testid="task-edit-btn"
           >
             <IconEdit className="w-4 h-4" />
           </button>
@@ -152,6 +164,7 @@ export const TaskItem = ({
             className="btn-action btn-action-delete"
             title="Delete Task"
             aria-label="Delete Task"
+            data-testid="task-delete-btn"
           >
             <IconTrash className="w-4 h-4" />
           </button>
@@ -159,4 +172,4 @@ export const TaskItem = ({
       </div>
     </article>
   );
-};
+});

@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { loadTasksFromStorage, saveTasksToStorage, SAMPLE_TASKS } from '../utils/storage';
+import { sanitizeString, validateTaskSchema } from '../utils/security';
 import { playTaskCompleteSound } from '../utils/audio';
 
 export const useTasks = () => {
@@ -16,34 +17,52 @@ export const useTasks = () => {
   }, [tasks]);
 
   // Create Task
-  const addTask = (taskData) => {
-    const newTask = {
-      id: `task-${Date.now()}`,
-      title: taskData.title.trim(),
-      description: taskData.description ? taskData.description.trim() : '',
-      priority: taskData.priority || 'Medium',
+  const addTask = useCallback((taskData) => {
+    const rawTask = {
+      id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      title: sanitizeString(taskData.title),
+      description: sanitizeString(taskData.description || ''),
+      priority: ['High', 'Medium', 'Low'].includes(taskData.priority) ? taskData.priority : 'Medium',
       completed: false,
       createdAt: new Date().toISOString(),
       dueDate: taskData.dueDate || '',
-      category: taskData.category || 'General',
+      category: sanitizeString(taskData.category || 'General'),
       estimatedMinutes: parseInt(taskData.estimatedMinutes, 10) || 25,
       completedMinutes: 0,
-      subtasks: taskData.subtasks || []
+      subtasks: Array.isArray(taskData.subtasks)
+        ? taskData.subtasks.map((st) => ({
+            id: st.id || `sub-${Math.random().toString(36).substr(2, 5)}`,
+            title: sanitizeString(st.title),
+            completed: Boolean(st.completed)
+          }))
+        : []
     };
 
-    setTasks((prev) => [newTask, ...prev]);
-    return newTask;
-  };
+    const validated = validateTaskSchema(rawTask);
+    if (!validated || !validated.title) return null;
+
+    setTasks((prev) => [validated, ...prev]);
+    return validated;
+  }, []);
 
   // Update Task
-  const updateTask = (id, updatedFields) => {
+  const updateTask = useCallback((id, updatedFields) => {
     setTasks((prev) =>
-      prev.map((task) => (task.id === id ? { ...task, ...updatedFields } : task))
+      prev.map((task) => {
+        if (task.id === id) {
+          const merged = { ...task, ...updatedFields };
+          if (updatedFields.title) merged.title = sanitizeString(updatedFields.title);
+          if (updatedFields.description) merged.description = sanitizeString(updatedFields.description);
+          if (updatedFields.category) merged.category = sanitizeString(updatedFields.category);
+          return validateTaskSchema(merged) || task;
+        }
+        return task;
+      })
     );
-  };
+  }, []);
 
   // Toggle Task Completion
-  const toggleTaskCompletion = (id) => {
+  const toggleTaskCompletion = useCallback((id) => {
     setTasks((prev) =>
       prev.map((task) => {
         if (task.id === id) {
@@ -56,23 +75,23 @@ export const useTasks = () => {
         return task;
       })
     );
-  };
+  }, []);
 
   // Delete Task
-  const deleteTask = (id) => {
+  const deleteTask = useCallback((id) => {
     setTasks((prev) => prev.filter((task) => task.id !== id));
     if (selectedFocusTaskId === id) {
       setSelectedFocusTaskId(null);
     }
-  };
+  }, [selectedFocusTaskId]);
 
   // Clear All Completed Tasks
-  const clearCompletedTasks = () => {
+  const clearCompletedTasks = useCallback(() => {
     setTasks((prev) => prev.filter((task) => !task.completed));
-  };
+  }, []);
 
   // Toggle Subtask Completion
-  const toggleSubtask = (taskId, subtaskId) => {
+  const toggleSubtask = useCallback((taskId, subtaskId) => {
     setTasks((prev) =>
       prev.map((task) => {
         if (task.id === taskId && task.subtasks) {
@@ -84,20 +103,21 @@ export const useTasks = () => {
         return task;
       })
     );
-  };
+  }, []);
 
   // Reset to Initial Sample Tasks
-  const resetToSampleTasks = () => {
+  const resetToSampleTasks = useCallback(() => {
     setTasks(SAMPLE_TASKS);
     saveTasksToStorage(SAMPLE_TASKS);
-  };
+  }, []);
 
   // Bulk Import Tasks
-  const importTasks = (importedTasks) => {
+  const importTasks = useCallback((importedTasks) => {
     if (Array.isArray(importedTasks)) {
-      setTasks(importedTasks);
+      const validTasks = importedTasks.map(validateTaskSchema).filter(Boolean);
+      setTasks(validTasks);
     }
-  };
+  }, []);
 
   // Filtered & Searched Tasks computation
   const filteredTasks = useMemo(() => {

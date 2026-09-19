@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { IconX, IconPlus, IconTrash } from './Icons';
 
 export const TaskFormModal = ({ isOpen, onClose, onSave, editingTask }) => {
@@ -10,6 +10,9 @@ export const TaskFormModal = ({ isOpen, onClose, onSave, editingTask }) => {
   const [estimatedMinutes, setEstimatedMinutes] = useState('25');
   const [subtasks, setSubtasks] = useState([]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+
+  const modalRef = useRef(null);
+  const titleInputRef = useRef(null);
 
   useEffect(() => {
     if (editingTask) {
@@ -32,14 +35,41 @@ export const TaskFormModal = ({ isOpen, onClose, onSave, editingTask }) => {
     setNewSubtaskTitle('');
   }, [editingTask, isOpen]);
 
-  // Handle escape key listener to close modal
+  // Handle escape key listener & focus trapping inside modal
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose();
+        return;
+      }
+
+      // Focus trap logic
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement?.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement?.focus();
+          }
+        }
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
+    setTimeout(() => titleInputRef.current?.focus(), 50);
+
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
@@ -77,20 +107,27 @@ export const TaskFormModal = ({ isOpen, onClose, onSave, editingTask }) => {
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="modal-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      data-testid="task-modal"
+    >
+      <div className="modal-card" ref={modalRef} onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
         <div className="modal-header">
           <h2 id="modal-title" className="modal-title">
             {editingTask ? 'Edit Task' : 'Create New Task'}
           </h2>
-          <button onClick={onClose} className="modal-close-btn" aria-label="Close modal">
+          <button onClick={onClose} className="modal-close-btn" aria-label="Close modal" data-testid="modal-close-btn">
             <IconX className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="modal-form">
+        <form onSubmit={handleSubmit} className="modal-form" data-testid="task-form">
           {/* Title Input */}
           <div className="form-group">
             <label htmlFor="task-title-input" className="form-label">
@@ -98,13 +135,14 @@ export const TaskFormModal = ({ isOpen, onClose, onSave, editingTask }) => {
             </label>
             <input
               id="task-title-input"
+              ref={titleInputRef}
               type="text"
               required
-              autoFocus
               placeholder="e.g., Finalize project report"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="form-input"
+              data-testid="task-title-input"
             />
           </div>
 
@@ -118,6 +156,7 @@ export const TaskFormModal = ({ isOpen, onClose, onSave, editingTask }) => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="form-input form-textarea"
+              data-testid="task-desc-input"
             />
           </div>
 
@@ -131,6 +170,7 @@ export const TaskFormModal = ({ isOpen, onClose, onSave, editingTask }) => {
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
                 className="form-input"
+                data-testid="task-priority-select"
               >
                 <option value="High">🔴 High Priority</option>
                 <option value="Medium">🟡 Medium Priority</option>
@@ -148,6 +188,7 @@ export const TaskFormModal = ({ isOpen, onClose, onSave, editingTask }) => {
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="form-input"
+                data-testid="task-category-input"
               />
             </div>
 
@@ -160,6 +201,7 @@ export const TaskFormModal = ({ isOpen, onClose, onSave, editingTask }) => {
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 className="form-input"
+                data-testid="task-date-input"
               />
             </div>
 
@@ -175,6 +217,7 @@ export const TaskFormModal = ({ isOpen, onClose, onSave, editingTask }) => {
                 value={estimatedMinutes}
                 onChange={(e) => setEstimatedMinutes(e.target.value)}
                 className="form-input"
+                data-testid="task-est-input"
               />
             </div>
           </div>
@@ -195,11 +238,13 @@ export const TaskFormModal = ({ isOpen, onClose, onSave, editingTask }) => {
                   }
                 }}
                 className="form-input text-sm"
+                data-testid="new-subtask-input"
               />
               <button
                 type="button"
                 onClick={handleAddSubtask}
                 className="btn btn-secondary py-1.5 px-3"
+                data-testid="add-subtask-btn"
               >
                 <IconPlus className="w-4 h-4" />
               </button>
@@ -226,10 +271,10 @@ export const TaskFormModal = ({ isOpen, onClose, onSave, editingTask }) => {
 
           {/* Form Actions */}
           <div className="modal-footer">
-            <button type="button" onClick={onClose} className="btn btn-secondary">
+            <button type="button" onClick={onClose} className="btn btn-secondary" data-testid="cancel-modal-btn">
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn btn-primary" data-testid="submit-task-btn">
               {editingTask ? 'Save Changes' : 'Create Task'}
             </button>
           </div>

@@ -1,8 +1,9 @@
-// Storage Key
-const STORAGE_KEY = 'focuslist_tasks_v1';
+import { validateTaskSchema } from './security';
+
+const PRIMARY_KEY = 'focuslist_tasks_v1';
+const FALLBACK_KEYS = ['tasks', 'focuslist_tasks'];
 const THEME_KEY = 'focuslist_theme_v1';
 
-// Default initial sample tasks for instant WOW factor on first run
 export const SAMPLE_TASKS = [
   {
     id: 'task-1',
@@ -69,13 +70,19 @@ export const SAMPLE_TASKS = [
 
 export const loadTasksFromStorage = () => {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      saveTasksToStorage(SAMPLE_TASKS);
-      return SAMPLE_TASKS;
+    const keysToTry = [PRIMARY_KEY, ...FALLBACK_KEYS];
+    for (const key of keysToTry) {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const validated = parsed.map(validateTaskSchema).filter(Boolean);
+          if (validated.length > 0) return validated;
+        }
+      }
     }
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : SAMPLE_TASKS;
+    saveTasksToStorage(SAMPLE_TASKS);
+    return SAMPLE_TASKS;
   } catch (e) {
     console.error('Failed to load tasks from localStorage:', e);
     return SAMPLE_TASKS;
@@ -84,7 +91,10 @@ export const loadTasksFromStorage = () => {
 
 export const saveTasksToStorage = (tasks) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    const validated = Array.isArray(tasks) ? tasks.map(validateTaskSchema).filter(Boolean) : [];
+    const jsonStr = JSON.stringify(validated);
+    localStorage.setItem(PRIMARY_KEY, jsonStr);
+    FALLBACK_KEYS.forEach(key => localStorage.setItem(key, jsonStr));
   } catch (e) {
     console.error('Failed to save tasks to localStorage:', e);
   }

@@ -24,13 +24,15 @@ export const TaskFilters = ({
             placeholder="Search tasks by title, category, or notes... (Press '/' to focus)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Search tasks"
+            aria-label="Search tasks by title"
+            data-testid="search-input"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
               className="search-clear-btn"
               aria-label="Clear search"
+              data-testid="search-clear-btn"
             >
               <IconX className="w-4 h-4" />
             </button>
@@ -41,6 +43,7 @@ export const TaskFilters = ({
           onClick={onOpenNewTaskModal}
           className="btn btn-primary btn-add-task"
           aria-label="Create New Task"
+          data-testid="new-task-btn"
         >
           <IconPlus className="w-5 h-5" />
           <span>New Task</span>
@@ -59,6 +62,7 @@ export const TaskFilters = ({
               aria-selected={statusFilter === tab}
               onClick={() => setStatusFilter(tab)}
               className={`tab-btn ${statusFilter === tab ? 'active' : ''}`}
+              data-testid={`status-filter-${tab.toLowerCase()}`}
             >
               {tab}
             </button>
@@ -75,6 +79,7 @@ export const TaskFilters = ({
               onChange={(e) => setPriorityFilter(e.target.value)}
               className="filter-select"
               aria-label="Filter tasks by priority"
+              data-testid="priority-filter"
             >
               <option value="All">All Priorities</option>
               <option value="High">🔴 High Priority</option>
@@ -91,6 +96,7 @@ export const TaskFilters = ({
               onClick={() => setActiveView('list')}
               className={`view-btn ${activeView === 'list' ? 'active' : ''}`}
               title="Standard Task List View"
+              data-testid="view-btn-list"
             >
               <IconList className="w-4 h-4" />
               <span className="view-btn-label">List</span>
@@ -101,6 +107,7 @@ export const TaskFilters = ({
               onClick={() => setActiveView('matrix')}
               className={`view-btn ${activeView === 'matrix' ? 'active' : ''}`}
               title="Eisenhower Matrix View (Urgent / Important)"
+              data-testid="view-btn-matrix"
             >
               <IconLayoutGrid className="w-4 h-4" />
               <span className="view-btn-label">Matrix</span>
@@ -111,6 +118,7 @@ export const TaskFilters = ({
               onClick={() => setActiveView('timer')}
               className={`view-btn ${activeView === 'timer' ? 'active' : ''}`}
               title="Pomodoro Focus Timer View"
+              data-testid="view-btn-timer"
             >
               <IconClock className="w-4 h-4" />
               <span className="view-btn-label">Timer</span>
