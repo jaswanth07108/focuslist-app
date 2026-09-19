@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTasks } from './hooks/useTasks';
 import { loadThemeFromStorage, saveThemeToStorage } from './utils/storage';
 import { Navbar } from './components/Navbar';
@@ -45,11 +45,11 @@ export function App() {
     saveThemeToStorage(theme);
   }, [theme]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
+  }, []);
 
-  // Keyboard shortcut listener ('N' for new task, '/' for search)
+  // Keyboard shortcut listener ('N' for new task modal, '/' for search)
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Ignore key shortcuts if user is currently typing in an input or textarea
@@ -63,7 +63,7 @@ export function App() {
         setIsModalOpen(true);
       } else if (e.key === '/') {
         e.preventDefault();
-        const searchInput = document.querySelector('.search-input');
+        const searchInput = document.getElementById('search-tasks-input');
         if (searchInput) {
           searchInput.focus();
         }
@@ -75,23 +75,23 @@ export function App() {
   }, []);
 
   // Form Save Handler (Add or Edit)
-  const handleSaveTask = (taskData) => {
+  const handleSaveTask = useCallback((taskData) => {
     if (editingTask) {
       updateTask(editingTask.id, taskData);
     } else {
       addTask(taskData);
     }
-  };
+  }, [editingTask, updateTask, addTask]);
 
-  const handleEditClick = (task) => {
+  const handleEditClick = useCallback((task) => {
     setEditingTask(task);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleStartFocusTimer = (task) => {
+  const handleStartFocusTimer = useCallback((task) => {
     setSelectedFocusTaskId(task.id);
     setActiveView('timer');
-  };
+  }, [setSelectedFocusTaskId, setActiveView]);
 
   const selectedFocusTask = tasks.find((t) => t.id === selectedFocusTaskId) || null;
 
@@ -111,7 +111,7 @@ export function App() {
         {/* Real-time Statistics Cards */}
         <TaskStats stats={stats} />
 
-        {/* Filter, Search & View Controls */}
+        {/* Quick Add & Filter Controls */}
         <TaskFilters
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -125,6 +125,7 @@ export function App() {
             setEditingTask(null);
             setIsModalOpen(true);
           }}
+          onQuickAddTask={addTask}
         />
 
         {/* Dynamic Main View Switcher (List View vs Matrix View vs Focus Timer) */}

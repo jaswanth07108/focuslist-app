@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { IconSearch, IconList, IconLayoutGrid, IconClock, IconPlus, IconX } from './Icons';
 
 export const TaskFilters = ({
@@ -10,11 +10,75 @@ export const TaskFilters = ({
   setPriorityFilter,
   activeView,
   setActiveView,
-  onOpenNewTaskModal
+  onOpenNewTaskModal,
+  onQuickAddTask
 }) => {
+  const [quickTitle, setQuickTitle] = useState('');
+  const [quickPriority, setQuickPriority] = useState('Medium');
+
+  const handleQuickSubmit = (e) => {
+    e.preventDefault();
+    if (!quickTitle.trim()) return;
+    onQuickAddTask({
+      title: quickTitle.trim(),
+      priority: quickPriority
+    });
+    setQuickTitle('');
+  };
+
   return (
-    <div className="filters-container">
-      {/* Top row: Search input & New Task CTA */}
+    <div className="filters-container" role="region" aria-label="Task Controls and Search">
+      {/* Quick Task Creation Form (Inline Input + Priority + Add Button) */}
+      <form onSubmit={handleQuickSubmit} className="quick-add-form" data-testid="quick-add-form">
+        <div className="quick-add-input-wrapper">
+          <input
+            type="text"
+            className="quick-add-input"
+            placeholder="Add a new task title and press Enter..."
+            value={quickTitle}
+            onChange={(e) => setQuickTitle(e.target.value)}
+            aria-label="Add a new task title"
+            data-testid="quick-add-input"
+            id="task-title-quick-input"
+          />
+        </div>
+
+        <select
+          value={quickPriority}
+          onChange={(e) => setQuickPriority(e.target.value)}
+          className="quick-priority-select"
+          aria-label="New task priority"
+          data-testid="quick-priority-select"
+        >
+          <option value="High">🔴 High</option>
+          <option value="Medium">🟡 Medium</option>
+          <option value="Low">🟢 Low</option>
+        </select>
+
+        <button
+          type="submit"
+          className="btn btn-primary"
+          aria-label="Add Task"
+          data-testid="quick-add-btn"
+        >
+          <IconPlus className="w-4 h-4" />
+          <span>Add</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onOpenNewTaskModal}
+          className="btn btn-secondary"
+          title="Open detailed task form modal"
+          aria-label="Open detailed task modal"
+          data-testid="new-task-btn"
+        >
+          <span className="btn-label-desktop">Detailed Form</span>
+          <kbd className="kbd-shortcut">N</kbd>
+        </button>
+      </form>
+
+      {/* Search Bar & View Switcher Row */}
       <div className="filters-top-row">
         <div className="search-input-wrapper">
           <IconSearch className="search-icon" />
@@ -26,6 +90,7 @@ export const TaskFilters = ({
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Search tasks by title"
             data-testid="search-input"
+            id="search-tasks-input"
           />
           {searchQuery && (
             <button
@@ -38,20 +103,9 @@ export const TaskFilters = ({
             </button>
           )}
         </div>
-
-        <button
-          onClick={onOpenNewTaskModal}
-          className="btn btn-primary btn-add-task"
-          aria-label="Create New Task"
-          data-testid="new-task-btn"
-        >
-          <IconPlus className="w-5 h-5" />
-          <span>New Task</span>
-          <kbd className="kbd-shortcut">N</kbd>
-        </button>
       </div>
 
-      {/* Bottom row: Status tabs, Priority filter dropdown & View switcher */}
+      {/* Status tabs, Priority filter dropdown & View switcher */}
       <div className="filters-bottom-row">
         {/* Status Filter Tabs (All, Active, Completed) */}
         <div className="status-tabs" role="tablist" aria-label="Task Status Filters">
@@ -72,7 +126,7 @@ export const TaskFilters = ({
         <div className="filter-controls-right">
           {/* Priority Filter Select */}
           <div className="priority-filter-wrapper">
-            <label htmlFor="priority-select" className="filter-label">Priority:</label>
+            <label htmlFor="priority-select" className="filter-label">Priority Filter:</label>
             <select
               id="priority-select"
               value={priorityFilter}
@@ -88,7 +142,7 @@ export const TaskFilters = ({
             </select>
           </div>
 
-          {/* View Switcher buttons (List, Eisenhower Matrix, Focus Timer) */}
+          {/* View Switcher buttons */}
           <div className="view-switcher" role="radiogroup" aria-label="View Switcher">
             <button
               role="radio"
