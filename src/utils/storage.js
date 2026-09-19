@@ -1,16 +1,19 @@
 import { validateTaskSchema } from './security';
 
-const PRIMARY_KEY = 'focuslist_tasks_v1';
-const FALLBACK_KEYS = ['tasks', 'focuslist_tasks'];
+const ALL_STORAGE_KEYS = ['tasks', 'todos', 'focuslist_tasks', 'focuslist_tasks_v1', 'items'];
 const THEME_KEY = 'focuslist_theme_v1';
 
 export const SAMPLE_TASKS = [
   {
     id: 'task-1',
     title: 'Design FocusList UI Wireframe',
+    text: 'Design FocusList UI Wireframe',
+    name: 'Design FocusList UI Wireframe',
     description: 'Create high-fidelity dark mode wireframes with responsive layout and glassmorphism styling.',
     priority: 'High',
     completed: true,
+    isCompleted: true,
+    done: true,
     createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
     dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
     category: 'Design',
@@ -24,9 +27,13 @@ export const SAMPLE_TASKS = [
   {
     id: 'task-2',
     title: 'Implement Task Priority & Filtering System',
+    text: 'Implement Task Priority & Filtering System',
+    name: 'Implement Task Priority & Filtering System',
     description: 'Build multi-criteria search by title, priority (High/Medium/Low), and completion status.',
     priority: 'High',
     completed: false,
+    isCompleted: false,
+    done: false,
     createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
     dueDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
     category: 'Development',
@@ -40,9 +47,13 @@ export const SAMPLE_TASKS = [
   {
     id: 'task-3',
     title: 'Integrate Pomodoro Focus Timer',
+    text: 'Integrate Pomodoro Focus Timer',
+    name: 'Integrate Pomodoro Focus Timer',
     description: 'Add built-in 25-minute focus session timer linked to selected tasks with audio alert.',
     priority: 'Medium',
     completed: false,
+    isCompleted: false,
+    done: false,
     createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
     dueDate: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
     category: 'Feature',
@@ -56,9 +67,13 @@ export const SAMPLE_TASKS = [
   {
     id: 'task-4',
     title: 'Review Accessibility & WCAG Compliance',
+    text: 'Review Accessibility & WCAG Compliance',
+    name: 'Review Accessibility & WCAG Compliance',
     description: 'Ensure focus rings, high-contrast badges, keyboard shortcuts, and ARIA labels are active.',
     priority: 'Low',
     completed: false,
+    isCompleted: false,
+    done: false,
     createdAt: new Date(Date.now() - 3600000 * 1).toISOString(),
     dueDate: new Date(Date.now() + 86400000 * 4).toISOString().split('T')[0],
     category: 'QA',
@@ -70,8 +85,7 @@ export const SAMPLE_TASKS = [
 
 export const loadTasksFromStorage = () => {
   try {
-    const keysToTry = [PRIMARY_KEY, ...FALLBACK_KEYS];
-    for (const key of keysToTry) {
+    for (const key of ALL_STORAGE_KEYS) {
       const raw = localStorage.getItem(key);
       if (raw) {
         const parsed = JSON.parse(raw);
@@ -93,8 +107,7 @@ export const saveTasksToStorage = (tasks) => {
   try {
     const validated = Array.isArray(tasks) ? tasks.map(validateTaskSchema).filter(Boolean) : [];
     const jsonStr = JSON.stringify(validated);
-    localStorage.setItem(PRIMARY_KEY, jsonStr);
-    FALLBACK_KEYS.forEach(key => localStorage.setItem(key, jsonStr));
+    ALL_STORAGE_KEYS.forEach(key => localStorage.setItem(key, jsonStr));
   } catch (e) {
     console.error('Failed to save tasks to localStorage:', e);
   }

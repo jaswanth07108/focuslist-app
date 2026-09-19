@@ -20,12 +20,20 @@ export const sanitizeString = (str) => {
 export const validateTaskSchema = (task) => {
   if (!task || typeof task !== 'object') return null;
   
+  const rawTitle = task.title || task.text || task.name || '';
+  const title = String(rawTitle).trim();
+  const isDone = Boolean(task.completed || task.isCompleted || task.done);
+  
   return {
     id: String(task.id || `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`),
-    title: String(task.title || '').trim(),
+    title: title,
+    text: title,
+    name: title,
     description: String(task.description || '').trim(),
     priority: ['High', 'Medium', 'Low'].includes(task.priority) ? task.priority : 'Medium',
-    completed: Boolean(task.completed),
+    completed: isDone,
+    isCompleted: isDone,
+    done: isDone,
     createdAt: task.createdAt ? String(task.createdAt) : new Date().toISOString(),
     dueDate: task.dueDate ? String(task.dueDate) : '',
     category: task.category ? String(task.category).trim() : 'General',
